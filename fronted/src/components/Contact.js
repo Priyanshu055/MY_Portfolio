@@ -11,7 +11,7 @@ const Contact = () => {
   const [submitMessage, setSubmitMessage] = useState('');
 
   const handleChange = (e) => {
-    setFormData({...formData, [e.target.name]: e.target.value});
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -20,7 +20,7 @@ const Contact = () => {
     setSubmitMessage('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/contact', {
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,28 +44,28 @@ const Contact = () => {
     <section id="contact" className="contact">
       <h2>Contact Me</h2>
       <form onSubmit={handleSubmit}>
-        <input 
-          type="text" 
-          name="name" 
-          placeholder="Your Name" 
-          value={formData.name} 
-          onChange={handleChange} 
-          required 
+        <input
+          type="text"
+          name="name"
+          placeholder="Your Name"
+          value={formData.name}
+          onChange={handleChange}
+          required
         />
-        <input 
-          type="email" 
-          name="email" 
-          placeholder="Your Email" 
-          value={formData.email} 
-          onChange={handleChange} 
-          required 
+        <input
+          type="email"
+          name="email"
+          placeholder="Your Email"
+          value={formData.email}
+          onChange={handleChange}
+          required
         />
-        <textarea 
-          name="message" 
-          placeholder="Your Message" 
-          value={formData.message} 
-          onChange={handleChange} 
-          required 
+        <textarea
+          name="message"
+          placeholder="Your Message"
+          value={formData.message}
+          onChange={handleChange}
+          required
         ></textarea>
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Sending...' : 'Send Message'}

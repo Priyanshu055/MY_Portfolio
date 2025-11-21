@@ -52,10 +52,24 @@ app.post('/api/contact', async (req, res) => {
 
 app.get('/api/resume', (req, res) => {
   const resumePath = path.join(__dirname, 'uploads', 'resume.pdf');
+  const fs = require('fs');
+  
+  // Check if file exists
+  if (!fs.existsSync(resumePath)) {
+    return res.status(404).json({ message: 'Resume not found' });
+  }
+  
+  // Set proper headers for PDF download
+  res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename="resume.pdf"');
+  
+  // Send the file
   res.sendFile(resumePath, (err) => {
     if (err) {
-      res.status(404).json({ message: 'Resume not found' });
+      console.error('Error sending resume:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'Error downloading resume' });
+      }
     }
   });
 });
