@@ -25,13 +25,40 @@ const transporter = nodemailer.createTransport({
 
 // Routes
 app.post('/api/contact', async (req, res) => {
-  const { name, email, message } = req.body;
-
   try {
+    // Check if environment variables are set
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('Missing environment variables: EMAIL_USER or EMAIL_PASS');
+      return res.status(500).json({ 
+        message: 'Server configuration error. Email service not configured.',
+        error: 'Missing email credentials. Please set EMAIL_USER and EMAIL_PASS in .env file'
+      });
+    }
+
+    const { name, email, message } = req.body;
+
+    // Validate input
+    if (!name || !email || !message) {
+      return res.status(400).json({ 
+        message: 'All fields are required',
+        error: 'Missing required fields'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        message: 'Please enter a valid email address',
+        error: 'Invalid email format'
+      });
+    }
+
     // Send email to yourself
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    const info = await transporter.sendMail({
+      from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER, // Send to yourself
+      replyTo: email, // Allow replying directly to the sender
       subject: `New Contact Message from ${name}`,
       html: `
         <h3>New Contact Message</h3>
@@ -39,14 +66,41 @@ app.post('/api/contact', async (req, res) => {
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Message:</strong></p>
         <p>${message}</p>
+      `,
+      text: `
+        New Contact Message
+        
+        Name: ${name}
+        Email: ${email}
+        Message: ${message}
       `
     });
 
-    console.log(`Email sent successfully from ${name} (${email})`);
+    console.log(`Email sent successfully from ${name} (${email}) - Message ID: ${info.messageId}`);
     res.json({ message: 'Message sent successfully!' });
   } catch (error) {
     console.error('Error sending email:', error);
-    res.status(500).json({ message: 'Failed to send message. Please try again.' });
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to send message. Please try again.';
+    
+    if (error.code === 'EAUTH' || error.code === 'EENVELOPE') {
+      errorMessage = 'Email authentication failed. Please check email credentials.';
+    } else if (error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT') {
+      errorMessage = 'Connection error. Please check your internet connection.';
+    } else if (error.message && error.message.includes('Invalid login')) {
+      errorMessage = 'Email authentication failed. Invalid email or password.';
+    } else if (error.message) {
+      errorMessage = `Error: ${error.message}`;
+    }
+
+    res.status(500).json({ 
+      message: errorMessage,
+      error: error.message || 'Unknown error',
+      code: error.code || 'UNKNOWN'
+    });
   }
 });
 

@@ -28,14 +28,44 @@ const Contact = () => {
         body: JSON.stringify(formData),
       });
 
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        // If response is not JSON, it might be a network error
+        throw new Error('Server did not respond properly. Is the backend server running?');
+      }
+
       if (response.ok) {
-        setSubmitMessage('Message sent successfully!');
+        setSubmitMessage('✅ Message sent successfully!');
         setFormData({ name: '', email: '', message: '' });
       } else {
-        setSubmitMessage('Failed to send message. Please try again.');
+        // Show the error message from the server
+        const errorMsg = data.message || data.error || 'Failed to send message. Please try again.';
+        setSubmitMessage(`❌ ${errorMsg}`);
+        console.error('Contact form error:', data);
+        
+        // Log specific error details for debugging
+        if (data.error) {
+          console.error('Error details:', data.error);
+        }
+        if (data.code) {
+          console.error('Error code:', data.code);
+        }
       }
     } catch (error) {
-      setSubmitMessage('Error sending message. Please check your connection.');
+      console.error('Network error:', error);
+      let errorMessage = 'Error sending message. ';
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage += 'Cannot connect to server. Make sure the backend server is running on port 5000.';
+      } else if (error.message.includes('backend server')) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += 'Please check your connection and try again.';
+      }
+      
+      setSubmitMessage(`❌ ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }

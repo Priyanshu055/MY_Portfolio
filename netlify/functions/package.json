@@ -1,9 +1,0 @@
-{
-  "name": "netlify-functions",
-  "version": "1.0.0",
-  "description": "Netlify serverless functions for portfolio",
-  "dependencies": {
-    "nodemailer": "^6.9.0"
-  }
-}
-
